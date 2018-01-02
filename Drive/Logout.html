@@ -1,0 +1,27 @@
+<html>
+    <head>
+        <title>Drive</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="CSS/bootstrap.css">
+        <link rel="stylesheet" href="CSS/login.css">
+        <script src="JS/jquery.js" type="text/javascript"></script>
+        <script src="JS/bootstrap.js"></script>
+	<script src="JS/ajax.js" type="text/javascript"></script>
+        <script type="text/javascript">
+        $(document).ready(function (){
+            $.post("Logout",{},
+            function(data,status){
+                    $("#id").append(data);
+            });
+            $.post("Logout",{},
+            function(data,status){
+                    $("#files").append(data);
+            });
+        });
+        </script>
+    </head>
+    <body>
+        <div class="jumbotron"><h1>Thank you for using our service hope to see you soon</h1></div>
+    </body>
+</html>
