@@ -1,4 +1,4 @@
-package Users;
+package JAVA;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -15,6 +15,7 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 @WebServlet(name = "Login", urlPatterns = {"/Login"})
 public class Login extends HttpServlet {
@@ -30,7 +31,7 @@ public class Login extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         try {
-            cp = ConnectionPooling.getInstance("com.mysql.jdbc.Driver","jdbc:mysql://localhost:3306/Drive","root","root");
+            cp = ConnectionPooling.getInstance("jdbc:mysql://localhost:3306/Drive?autoReconnect=true&useSSL=false","root","root");
         } catch (ClassNotFoundException ex) {
             Logger.getLogger(Login.class.getName()).log(Level.SEVERE, null, ex);
         } catch (SQLException ex) {
@@ -38,25 +39,26 @@ public class Login extends HttpServlet {
         }
         String Id=request.getParameter("name");
         String Pass=request.getParameter("pass");
-        Connection con=null;
+        PrintWriter out= response.getWriter();
+        Connection con = null;
+        try {
+            con = cp.getConnection();
+        } catch (SQLException ex) {
+           out.println("<font color=red>unable to create connection</font>");
+        }
         ResultSet rs;
         try {
-            con=cp.getConnection();
             PreparedStatement prepStmt = con.prepareStatement("select fname,mail,pass from users where mail=?");
             prepStmt.setString(1,Id);
             rs = prepStmt.executeQuery();
             System.out.println(rs.toString());
             if(rs.next()){
              if(Pass.equals(rs.getString("pass"))){
-                Cookie loginCookie = new Cookie("user",rs.getString("mail"));
-                //Cookie path=new Cookie("path",rs.getString("mail"));
-                loginCookie.setMaxAge(24*60*60);
-                response.addCookie(loginCookie);
-                //response.addCookie(path);
+                HttpSession session = request.getSession(true);
+                session.setAttribute("user",rs.getString("mail"));
                 processRequest(request,response);
              }else{
                 RequestDispatcher rd = getServletContext().getRequestDispatcher("/index.html");
-                PrintWriter out= response.getWriter();
                 out.println("<font color=red>Either user name or password is wrong.</font>");
                 rd.include(request, response);
              }

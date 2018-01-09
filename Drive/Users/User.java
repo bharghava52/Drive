@@ -1,4 +1,4 @@
-package Users;
+package JAVA;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -11,7 +11,7 @@ public class User {
     ConnectionPooling cp;
   
     public User() throws ClassNotFoundException, SQLException {
-        this.cp = ConnectionPooling.getInstance("com.mysql.jdbc.Driver","jdbc:mysql://localhost:3306/Drive", "root","root");
+        this.cp = ConnectionPooling.getInstance("jdbc:mysql://localhost:3306/Drive", "root","root");
     }
   
     public int insert(Profile p){

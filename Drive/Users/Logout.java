@@ -1,4 +1,5 @@
-package Users;
+package JAVA;
+
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -17,8 +18,7 @@ public class Logout extends HttpServlet {
         try{ 
             response.setContentType("text/html");  
             PrintWriter out = response.getWriter();  
-            Cookie ck[]=request.getCookies();  
-            ck[0].setMaxAge(0);
+            request.getSession().invalidate();
             out.close();  
         }catch(Exception e){
             System.out.println(e);

@@ -1,5 +1,4 @@
-package Users;
-
+package JAVA;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -7,16 +6,15 @@ import java.util.Vector;
 import java.lang.String;
 
 public class ConnectionPooling {
-    private static String driver, url, username, password;
+    private static String  url, username, password;
     private static int no_of_conn;
     public  static Vector<Connection> availableConnections, busyConnections;
     private static ConnectionPooling Cpobj;
     
     private ConnectionPooling(){}
     
-    public static ConnectionPooling getInstance(String driver,String url, String username, String password) throws ClassNotFoundException, SQLException{
+    public static ConnectionPooling getInstance(String url, String username, String password) throws ClassNotFoundException, SQLException{
         if(Cpobj == null){
-            ConnectionPooling.driver = driver;
             ConnectionPooling.url = url;
             ConnectionPooling.username = username;
             ConnectionPooling.password = password;
@@ -32,7 +30,6 @@ public class ConnectionPooling {
     }
     
     private static Connection makeNewConnection() throws ClassNotFoundException, SQLException {
-        Class.forName(driver);
         Connection connection = DriverManager.getConnection(url, username,password);
         return (connection);
     }
@@ -59,3 +56,4 @@ public class ConnectionPooling {
         notifyAll();
     }
 }
+

@@ -1,4 +1,4 @@
-package Users;
+package JAVA;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,7 +23,7 @@ public class Signup extends HttpServlet {
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         try {
-            cp = ConnectionPooling.getInstance("com.mysql.jdbc.Driver","jdbc:mysql://localhost:3306/Drive", "root","root");
+            cp = ConnectionPooling.getInstance("jdbc:mysql://localhost:3306/Drive?autoReconnect=true&useSSL=false", "root","root");
         } catch (ClassNotFoundException ex) {
             Logger.getLogger(Login.class.getName()).log(Level.SEVERE, null, ex);
         } catch (SQLException ex) {
@@ -48,10 +48,15 @@ public class Signup extends HttpServlet {
             if(Status==1){
                 File theDir = new File(mail);
                 if (!theDir.exists()) {
-                    System.out.println("creating directory: " + theDir.getName());
                     try{
                         theDir.mkdir();
-                        out.println("<font color=red>Drive is ready ");
+                        prepStmt = con.prepareStatement("insert into share set mail=? sharedby='{}'");
+                        prepStmt.setString(1,mail);
+                        Status=prepStmt.executeUpdate();
+                        if(Status==1)
+                        out.println("<font color=green>Drive is ready ");
+                        else
+                        out.println("<font color=red>shareing is not created");
                     } 
                     catch(SecurityException se){
                         System.out.print(se);
@@ -68,7 +73,7 @@ public class Signup extends HttpServlet {
             }
         }catch(Exception e){
         }finally{
-          cp.free(con);
+         cp.free(con);
         }    
     }
 

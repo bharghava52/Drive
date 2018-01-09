@@ -1,7 +1,7 @@
-package Users;
+package JAVA;
 
-public class Profile{
-    private String firstname,lastname,mail,password;
+public class Profile {
+  private String firstname,lastname,mail,password;
 
     public String getFirstname() {
         return firstname;
@@ -33,5 +33,5 @@ public class Profile{
 
     public void setPassword(String password) {
         this.password = password;
-    }
+    }  
 }
