@@ -6,20 +6,116 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link rel="stylesheet" href="CSS/login.css">
         <link rel="stylesheet" href="CSS/bootstrap.css">
+        <style>
+            #foldermenu{
+                display:none;
+                position:fixed;
+                border:1px solid #B2B2B2;
+                width:150px;      
+                background:#F9F9F9;
+                box-shadow: 3px 3px 2px #E9E9E9;
+                border-radius:4px;
+            }
+
+            #folderitems :hover{
+                color: white;
+                background:#284570;
+                border-radius:2px;
+            }
+
+            #folderitems{
+                list-style:none;
+                margin:0px;
+                margin-top:4px;
+                padding-left:10px;
+                padding-right:10px;
+                padding-bottom:3px;
+                font-size:17px;
+                color: #333333;
+
+            }
+            
+            #filemenu{
+                display:none;
+                position:fixed;
+                border:1px solid #B2B2B2;
+                width:150px;      
+                background:#F9F9F9;
+                box-shadow: 3px 3px 2px #E9E9E9;
+                border-radius:4px;
+            }
+
+            #fileitems :hover{
+                color: white;
+                background:#284570;
+                border-radius:2px;
+            }
+
+            #fileitems{
+                list-style:none;
+                margin:0px;
+                margin-top:4px;
+                padding-left:10px;
+                padding-right:10px;
+                padding-bottom:3px;
+                font-size:17px;
+                color: #333333;
+
+            }
+        </style>
         <script src="JS/jquery.js" type="text/javascript"></script>
         <script src="JS/bootstrap.js"></script>
 	<script src="JS/ajax.js" type="text/javascript"></script>
+        <script src="JS/autocomplete-0.3.0.min.js" type="text/javascript"></script>
         <script type="text/javascript">
+        //document.addEventListener('contextmenu', event => event.preventDefault());
+        var users=[];
         $(document).ready(function (){
-            $.post("GetCookies",{},
+            $.post("GetSession",{},
             function(data,status){
                 obj=JSON.parse(data);
-                    $("#id").append(obj.User);
+                $("#id").append(obj.User);
             });
-            $.post("GetFiles",{},
-            function(data,status){
-                    $("#files").append(data);
+            
+            $.get("Users",{},function(data){
+                users=$.parseJSON(data);
+                var list="";
+                for(var i=0;i<users.length;i++){
+                  list+="<li ><a href='#' class='shareinput'>"+users[i]+"</a></li>";  
+                }
+                document.getElementById("users").innerHTML=list;
             });
+                
+            $(document).on('click','.shareinput',function(){
+                $("#sharemail").val($(this).text());
+            });
+            
+            $.post("GetFiles",{},function(data,status){
+                $("#files").append(data);
+                $.get("SharedFiles",{},function(data){
+                        $("#files").append(data);
+                });
+            });
+            
+            $(document).on('contextmenu','.directory',function(e){
+                if($(this).text()!="<--Back"){
+                    e.preventDefault();
+                    $("#foldermenu").css("left",e.pageX);
+                    $("#foldermenu").css("top",e.pageY);     
+                    $("#foldermenu").fadeIn(200,startFocusOut());
+                    $("#foldermenupath").val($(this).attr("path"));
+                    $("#foldermenupath").attr("file",$(this).text());
+                }
+            });
+            
+            $(document).on('contextmenu','.file',function(e){
+                e.preventDefault();
+                $("#filemenu").css("left",e.pageX);
+                $("#filemenu").css("top",e.pageY);     
+                $("#filemenu").fadeIn(200,startFocusOut());
+                $("#filemenupath").val($(this).attr("path"));
+            });
+            
             $(document).on('click','.directory',function(){
                 $.get("LocFiles",
                     {
@@ -31,20 +127,262 @@
                     }
                 );
             });
-            $(document).on('click','.file',function(){
-                var path1=$(this).attr('path');
-                $.get("DownloadFile",
+            
+            $(document).on('click','.frienddatas',function(){
+                $.get("FriendDatas",{
+                    root:$("#root").val(),
+                    path:$(this).attr('path')
+                },
+                function(data){
+                    $("#files").empty();
+                    $("#files").append(data);
+                });
+            });
+            
+            $(document).on('click','#createfolder',function(){
+                var check=$("#fldrname").val();
+                var n=check.search("\\.");
+                if(n==-1){
+                    $.post("CreateFolder",
+                        {
+                            path:$("#path").val(),
+                            name:$("#fldrname").val()
+                        },
+                        function(data,status){
+                            $.get("LocFiles",
+                                {
+                                    path:$("#path").val()
+                                },
+                                function(data,status,xhr){
+                                    $("#files").empty();
+                                    $("#files").append(data);
+                                }
+                            );
+                            var folderBox1 = document.getElementById("folderBox");
+                            folderBox1.style.display="none";
+                            alert(data);
+                        }
+                    );
+                    
+                }else{
+                    alert("folder cannot contain dot '.' :"+n);
+                }   
+            });   
+            
+            $('.upload-btn').on('click', function (){
+                $('#upload-input').click();
+                $('.progress-bar').text('0%');
+                $('.progress-bar').width('0%');
+            });
+            
+            $(document).on('click','#snackbarclose',function(){
+               $.get("LocFiles",
                     {
-                            path:$(this).attr('path')
+                        path:$("#path").val()
                     },
                     function(data,status,xhr){
+                        $("#files").empty();
+                        $("#files").append(data);
                     }
-                );
+                ); 
             });
+            
+            $(document).on('click','.sharedwithme',function(){
+                var x=document.getElementById("myBtn");
+                x.style.display="none";
+                $.get("SharedFiles",{},
+                function(data){
+                    $("#files").empty();
+                    $("#files").append(data);
+                });
+            });
+            
+            $(document).on('click','.friend',function(){
+               $.get("FriendFiles",{
+                   friend:$(this).attr('user')
+               },function(data){
+                   $("#files").empty();
+                   $("#files").append(data);
+               }); 
+            });
+            
+            $(document).on('click','.frienddata',function(){
+                $.get("FriendData",{
+                    path:$(this).attr('path')
+                },function(data,status){
+                    $("#files").empty();
+                    $("#files").append(data);
+                });
+            });
+            
+            $(document).on('click','#mydrive',function(){
+                var x=document.getElementById("myBtn");
+                x.style.display="block";
+                $.get("GetFiles",{},function(data){
+                    $("#files").empty();
+                    $("#files").append(data);
+                    $.get("SharedFiles",{},function(data1){
+                        $("#files").append(data1);
+                    });
+                }); 
+                
+            });
+            
+            $("#folderitems > li.download").click(function(){
+                $.post("DownloadFolder",{
+                    path:$("#foldermenupath").val(),
+                    file:$("#foldermenupath").attr("file")
+                },function(data,status){
+                    alert(data);
+                    $.get("LocFiles",
+                        {
+                            path:$("#path").val()
+                        },
+                        function(data,status,xhr){
+                            $("#files").empty();
+                            $("#files").append(data);
+                        }
+                    );
+                });
+            });
+            
+            $("#folderitems > li.delete").click(function(){
+                if(confirm("Are you sure to delete this folder")){
+                    $.post("DeleteFolder",{
+                        path:$("#foldermenupath").val()
+                    },function(data){
+                        alert(data);
+                        $.get("LocFiles",
+                            {
+                                path:$("#path").val()
+                            },
+                            function(data,status,xhr){
+                                $("#files").empty();
+                                $("#files").append(data);
+                            }
+                        ); 
+                    });
+                }   
+            });
+            
+            $("#fileitems > li.delete").click(function(){
+                if(confirm("Are you sure to delete this file")){
+                    $.post("DeleteFolder",{
+                        path:$("#filemenupath").val()
+                    },function(data){
+                        alert(data);
+                        $.get("LocFiles",
+                            {
+                                path:$("#path").val()
+                            },
+                            function(data,status,xhr){
+                                $("#files").empty();
+                                $("#files").append(data);
+                            }
+                        ); 
+                    });
+                }   
+            });
+            
+            $("#folderitems > li.share").click(function(){
+                $("#sharepath").val($("#foldermenupath").val());
+                showshareBox();
+            });
+            
+            $("#fileitems > li.share").click(function(){
+                $("#sharepath").val($("#filemenupath").val());
+                showshareBox();
+            });
+            
+            $(document).on('click',"#sharetomail",function(){
+                $.post('Share',{
+                    mail:$("#sharemail").val(),
+                    path:$("#sharepath").val()
+                },function(data){
+                    alert(data);
+                });
+            });
+                        
         });
+        
+        function toggle(){
+            var ubt=document.getElementById("uploadBtn");
+            var cfbt=document.getElementById("folderBtn");
+            if(ubt.style.display==="block"){
+                ubt.style.display="none";
+                cfbt.style.display="none";
+            }
+            else{
+                ubt.style.display="block";
+                cfbt.style.display="block";
+            }
+        }
+        
+        function uploadFunction() {
+            var x = document.getElementById("snackbar");
+            var x1=document.getElementById("path");
+            var x2=document.getElementById("uploadpath");
+            x2.setAttribute("value",x1.getAttribute("value").toString());
+            x.className = "show";
+            x.style.visibility="visible";
+            //setTimeout(function(){ x.className = x.className.replace("show", ""); }, 10000);
+        }
+                
+        function showfolderBox(){
+            var folderBox1 = document.getElementById("folderBox");
+            folderBox1.style.display="block";
+        }
+        function closefolderBox(){
+            var folderBox1 = document.getElementById("folderBox");
+            var fldrname=document.getElementById("fldrname");
+            fldrname.value="";
+            folderBox1.style.display="none";
+        }
+        
+        function closesnackbar(){
+            var snackbar=document.getElementById("snackbar");
+            snackbar.style.visibility="hidden";
+        }
+        
+        function startFocusOut(){
+            $(document).on("click",function(){
+            $("#foldermenu").hide();
+            $("#filemenu").hide();
+            });
+        }
+        
+        function showshareBox(){
+            var folderBox1 = document.getElementById("shareBox");
+            folderBox1.style.display="block";
+        }
+        
+        function closeshareBox(){
+            var folderBox1 = document.getElementById("shareBox");
+            var sharemail =document.getElementById("sharemail");
+            sharemail.value="";
+            folderBox1.style.display="none";
+            
+        }
+        
+        function search() {
+            var input, filter, ul, li, a, i;
+            input = document.getElementById("sharemail");
+            filter = input.value.toUpperCase();
+            ul = document.getElementById("users");
+            li = ul.getElementsByTagName("li");
+            for (i = 0; i < li.length; i++) {
+                a = li[i].getElementsByTagName("a")[0];
+                if (a.innerHTML.toUpperCase().indexOf(filter) > -1) {
+                    li[i].style.display = "";
+                } else {
+                    li[i].style.display = "none";
+
+                }
+            }
+        }
         </script>
     </head>
-    <body>
+    <body id="body">
         <nav class="navbar navbar-inverse">
             <div class="container-fluid">
                 <div class="navbar-header">
@@ -53,21 +391,66 @@
                         <span class="icon-bar"></span>
                         <span class="icon-bar"></span>
                     </button>
-                    <a class="navbar-brand" href="#">Drive</a>
+                    <a class="navbar-brand" href="#" id='mydrive'>Drive</a>
                 </div>
                 <div class="collapse navbar-collapse" id="mynavbar">
                     <ul class="nav navbar-nav pull-right">
-                        <li><div class="dropdown">
-                                <button class="dropbtn" id='id'><i class="fa fa-caret-down"></i></button></div>
-                        </li>    
-                        <li><div class="dropdown">
-                        <button class="dropbtn" id='id'><i class="fa fa-caret-down"></i><a href="Logout.html">Logout</a></button></div></li>
+                        <li>
+                            <a class="navbar-brand" href="#" id='id'></a>
+                        </li> 
+                        <li>
+                            <button class="sharedwithme" style="background-color: transparent; border: 0;"><a class="navbar-brand">Shared with me</a></button>
+                        </li>
+                        <li>
+                            <a href="Logout.html">Logout</a>
+                        </li>
                     </ul>
                 </div>
             </div>
         </nav>
+        <iframe name="formDestination" id="formDestination" style="display:none"><head></head><body></body></iframe>
         <div>
             <table id="files"></table>
+        </div>
+        <div class="roundbutton">
+        <button id="uploadBtn" class="btn-default btn-sm" onclick="uploadFunction()">upload File</button>
+        <button id="folderBtn" class="btn-defalut btn-sm" onclick="showfolderBox()">Create Folder</button>
+        <input id="myBtn" type="button" value="+" onclick="toggle()"/>
+        </div>
+        <div id="snackbar">
+                <form action="Upload" method="post" enctype="multipart/form-data" target="formDestination">  
+                    Select File:<input type="file" name="fname"/><br/>
+                    <input type="hidden" name="path" id="uploadpath"/>
+                    <input type="submit" value="upload"/>  
+                </form>
+                <button id="snackbarclose" onclick="closesnackbar()">Close</button>
+        </div>
+        <div id="folderBox" style="display:none">
+            <input id="fldrname" type="text" style="color: black"/><br/>
+            <button id="createfolder" class="btn-defalut btn-sm" style="color: black">Create</button>
+            <button id="closefolderBox" class="btn-defalut btn-sm" onclick="closefolderBox()" style="color: black">Close</button>
+        </div>
+        <div id="shareBox" style="display:none">
+            <input type="hidden" id="sharepath" value=""/>
+            <input id="sharemail" type="text" style="color: black" onkeyup="search()"/>
+            <ul id="users"></ul>
+            <button id="sharetomail" class="btn-defalut btn-sm" style="color: black">Share</button>
+            <button id="closeshareBox" class="btn-defalut btn-sm" onclick="closeshareBox()" style="color: black">Close</button>
+        </div>
+        <div id='foldermenu'>
+            <input id="foldermenupath" type="hidden" value="" file=""/>
+          <ul id='folderitems'>
+            <li class="download">create Zip File</li>
+            <li class="delete">Delete Folder</li>  
+            <li class="share">Share Folder</li>
+          </ul>
+        </div>
+        <div id='filemenu'>
+            <input id="filemenupath" type="hidden" value="" file=""/>
+          <ul id='fileitems'>
+            <li class="delete">Delete File</li>  
+            <li class="share">Share File</li>
+          </ul>
         </div>
     </body>
 </html>

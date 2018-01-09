@@ -5,11 +5,57 @@
         <meta charset="utf-8">
         <title>Login Page</title>
         <link rel="stylesheet" href="CSS/login.css">
+        <script src="JS/jquery.js" type="text/javascript"></script>
+        <script src="JS/bootstrap.js"></script>
+	<script src="JS/ajax.js" type="text/javascript"></script>
+        <script>
+            var users=[];
+            $(document).ready(function (){
+                $.get("Users",{},function(data){
+                    users=$.parseJSON(data);      
+                });
+            });
+            
+            function check(){
+                var mailid=document.forms["signupform"]["mail"].value;
+                var pass=document.forms["signupform"]["pass"].value;
+                var pass1=document.forms["signupform"]["pass1"].value;
+                var fname=document.forms["signupform"]["fname"].value;
+                if(fname==""){
+                    alert("first name cannot be empty");
+                    return false;
+                }    
+                var atpos = mailid.indexOf("@");
+                var dotpos = mailid.lastIndexOf(".");
+                if (atpos<1 || dotpos<atpos+2 || dotpos+2>=mailid.length){
+                    alert("invalid mail id");
+                    return false;
+                }else{
+                    for (var i = 0, len = users.length; i < len; i++) {
+                        if(mailid==users[i]){
+                            alert("mail already exists");
+                            return false;
+                        }
+                    }
+                }
+                if(pass==""){
+                    alert("password cannot be empty it is for your security");
+                    return false;
+                }
+                if(pass==pass1){
+                    return true;
+                }else{
+                    alert("both the passwords showed match try to remember it");
+                    return false;
+                }
+            }
+            
+        </script>
     </head>
     <body>
         <div class="loginBox">
             <h2>Employee Login</h2>
-            <form method="post" action="signup">
+            <form name="signupform" method="post" action="signup" onsubmit="return check()">
                 <p>First name</p>
                 <input type="text" name="fname" />
                 <p>Last Name</p>
