@@ -12,10 +12,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-/**
- *
- * @author Administrator
- */
+
 @WebServlet(name = "LocFiles", urlPatterns = {"/LocFiles"})
 public class LocFiles extends HttpServlet {
 

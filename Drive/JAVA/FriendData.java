@@ -32,7 +32,7 @@ public class FriendData extends HttpServlet {
         {
            if (listOfFiles[i].isFile()) 
             {
-                out.println("<tr><td>"+"<a  class='file' href=\"DownloadFile?path="+path+"/"+ listOfFiles[i].getName()+"&file="+listOfFiles[i].getName()+"\" path='"+path+"/"+ listOfFiles[i].getName()+"' file='"+listOfFiles[i].getName()+"'>" + listOfFiles[i].getName()+"</a></td></tr>");
+                out.println("<tr><td>"+"<a  class='friendfile' href=\"DownloadFile?path="+path+"/"+ listOfFiles[i].getName()+"&file="+listOfFiles[i].getName()+"\" path='"+path+"/"+ listOfFiles[i].getName()+"' file='"+listOfFiles[i].getName()+"'>" + listOfFiles[i].getName()+"</a></td></tr>");
             } 
         }
         out.close();

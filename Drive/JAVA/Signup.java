@@ -22,13 +22,7 @@ public class Signup extends HttpServlet {
     
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        try {
-            cp = ConnectionPooling.getInstance("jdbc:mysql://localhost:3306/Drive?autoReconnect=true&useSSL=false", "root","root");
-        } catch (ClassNotFoundException ex) {
-            Logger.getLogger(Login.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (SQLException ex) {
-            Logger.getLogger(Login.class.getName()).log(Level.SEVERE, null, ex);
-        }
+
         String fname=request.getParameter("fname");
         String lname=request.getParameter("lname");
         String mail=request.getParameter("mail");
@@ -36,6 +30,7 @@ public class Signup extends HttpServlet {
         Connection con=null;
         ResultSet rs;
         try{
+            cp = ConnectionPooling.getInstance("jdbc:mysql://localhost:3306/Drive?autoReconnect=true&useSSL=false", "root","root");
             con=cp.getConnection();
             PreparedStatement prepStmt = con.prepareStatement("insert into users set fname=?,lname=?,mail=?,pass=?");
             prepStmt.setString(1,fname);
@@ -48,26 +43,29 @@ public class Signup extends HttpServlet {
             if(Status==1){
                 File theDir = new File(mail);
                 if (!theDir.exists()) {
-                    try{
-                        theDir.mkdir();
-                        prepStmt = con.prepareStatement("insert into share set mail=? sharedby='{}'");
+                    theDir.mkdir();
+                    prepStmt = con.prepareStatement("insert into share set mail=?,sharedby=?");
+                    prepStmt.setString(1,mail);
+                    prepStmt.setString(2,"{}");
+                    Status=prepStmt.executeUpdate();
+                    if(Status==1){
+                        prepStmt = con.prepareStatement("insert into mydata set mail=?,data=?");
                         prepStmt.setString(1,mail);
+                        prepStmt.setString(2,"{}");
                         Status=prepStmt.executeUpdate();
                         if(Status==1)
-                        out.println("<font color=green>Drive is ready ");
+                            out.println("<font color=green>Drive is ready ");
                         else
-                        out.println("<font color=red>shareing is not created");
-                    } 
-                    catch(SecurityException se){
-                        System.out.print(se);
-                    }        
+                            out.println("<font color=red>cannot create your database");
+                    }else
+                        out.println("<font color=red>shareing is not created");        
                 }
                 else{
                     out.println("<font color=red>Drive is not ready ");
                 }
                 out.println("Login has been created you can login now</font>");
                 rd.include(request, response);
-             }else{
+            }else{
               RequestDispatcher view = request.getRequestDispatcher("Unable to create Login");
               view.forward(request, response);
             }

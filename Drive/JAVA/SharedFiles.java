@@ -25,31 +25,20 @@ public class SharedFiles extends HttpServlet {
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         ConnectionPooling cp = null;
-        try {
-            cp = ConnectionPooling.getInstance("jdbc:mysql://localhost:3306/Drive?autoReconnect=true&useSSL=false","root","root");
-        } catch (ClassNotFoundException ex) {
-            Logger.getLogger(Login.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (SQLException ex) {
-            Logger.getLogger(Login.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        String Id=request.getSession().getAttribute("user").toString();
-        PrintWriter out= response.getWriter();
         Connection con = null;
         try {
+            cp = ConnectionPooling.getInstance("jdbc:mysql://localhost:3306/Drive?autoReconnect=true&useSSL=false","root","root");
+            String Id=request.getSession().getAttribute("user").toString();
+            response.setContentType("text/html");
+            PrintWriter out= response.getWriter();
             con = cp.getConnection();
-        } catch (SQLException ex) {
-           out.println("unable to create connection");
-        }
-        ResultSet rs;
-        try {
+            ResultSet rs;
             PreparedStatement prepStmt = con.prepareStatement("select sharedby from share where mail=?");
             prepStmt.setString(1,Id);
             rs = prepStmt.executeQuery();
             if(rs.next()){
-                out.println("starting the result to object");
                 JSONParser parser=new JSONParser();
                 JSONObject jobj =(JSONObject) parser.parse(rs.getString("sharedby"));
-                out.println("keys set created");
                 for(Object key : jobj.keySet()){
                     String keyStr = (String)key;
                     out.println("<tr><td><a href='#' class='friend' user='"+keyStr+"'>shared by:"+keyStr+"</a><tr><td>");

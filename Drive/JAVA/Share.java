@@ -6,8 +6,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -16,7 +14,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import org.json.simple.parser.JSONParser;
-import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 @WebServlet(name = "Share", urlPatterns = {"/Share"})
@@ -25,55 +22,67 @@ public class Share extends HttpServlet {
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         ConnectionPooling cp = null;
+        Connection con = null;
         PrintWriter out= response.getWriter();
+        ResultSet rs1=null;
         try {
             cp = ConnectionPooling.getInstance("jdbc:mysql://localhost:3306/Drive?autoReconnect=true&useSSL=false","root","root");
-        } catch (Exception ex) {
-            out.println("<font color=red>connection not pooled</font>"+ex);
-        }
-        
-        Connection con = null;
-        try {
             con = cp.getConnection();
-        } catch (SQLException ex) {
-           out.println("<font color=red>unable to create connection</font>");
-        }
-        try {
+            HttpSession ck=request.getSession();
+            String Id1=ck.getAttribute("user").toString();
             String Id=request.getParameter("mail");
-            String path=request.getParameter("path");
-            String path1[]=path.split("/");
-            PreparedStatement prepStmt = con.prepareStatement("select * from share where mail=?");
-            prepStmt.setString(1,Id);
-            ResultSet rs = prepStmt.executeQuery();
-            if(rs.next()){
-                try{
+            if(Id1.equals(Id)){
+                out.print("cannot share to self");
+            }else{
+                String path=request.getParameter("path");
+                String path1[]=path.split("/");
+                PreparedStatement prepStmt = con.prepareStatement("select data from mydata where mail=?");
+                prepStmt.setString(1,path1[0]);
+                ResultSet rs=prepStmt.executeQuery();
+                if(rs.next()){
                     JSONParser parser=new JSONParser();
-                    JSONObject jobj =(JSONObject) parser.parse(rs.getString("sharedby"));
-                    if(jobj.containsKey(path1[0])){
-                        JSONArray jary= (JSONArray) jobj.get(path1[0]);
-                        JSONObject jobj1=new JSONObject();
-                        jobj1.put(path,"YES");
-                        jary.add(jobj1);
-                        jobj.put(path1[0], jary);
-                    }else{
-                        JSONArray jary=new JSONArray();
-                        JSONObject jobj1=new JSONObject();
-                        jobj1.put(path,"YES");
-                        jary.add(jobj1);
-                        jobj.put(path1[0],jary);
-                    }
-                    prepStmt = con.prepareStatement("update share set sharedby=? where mail=?");
+                    JSONObject jobj =(JSONObject) parser.parse(rs.getString("data"));
+                    JSONObject jobj1=(JSONObject) jobj.get(path);
+                    jobj1.put(Id,"v");
+                    jobj.replace(path,jobj1);
+                    prepStmt =con.prepareStatement("update mydata set data=? where mail=?");
                     prepStmt.setString(1,jobj.toString());
-                    prepStmt.setString(2,Id);
-                    int status=prepStmt.executeUpdate();
-                    if(status!=-1){
-                        out.print("shared with the user");
+                    prepStmt.setString(2,path1[0]);
+                    int Status=prepStmt.executeUpdate();
+                    if(Status==1){
+                        prepStmt = con.prepareStatement("select * from share where mail=?");
+                        prepStmt.setString(1,Id);
+                        rs1 = prepStmt.executeQuery();
+                        if(rs1.next()){
+                            int checker=0;
+                            jobj =(JSONObject) parser.parse(rs1.getString("sharedby"));
+                            if(jobj.containsKey(path1[0])){
+                                JSONObject jobj2= (JSONObject) jobj.get(path1[0]);
+                                if(jobj2.containsKey(path)){
+                                 out.println("you have already shared this file/folder with this user");
+                                 checker=1;
+                                }else{
+                                 jobj2.put(path,"V");
+                                 jobj.replace(path1[0],jobj2);
+                                }
+                            }else{
+                                JSONObject jobj2=new JSONObject();
+                                jobj2.put(path,"V");
+                                jobj.put(path1[0],jobj2);
+                            }
+                            prepStmt = con.prepareStatement("update share set sharedby=? where mail=?");
+                            prepStmt.setString(1,jobj.toString());
+                            prepStmt.setString(2,Id);
+                            int status=prepStmt.executeUpdate();
+                            if(status!=-1 && checker==0){
+                                out.print("shared with the user");
+                            }
+                        }
                     }
-                }catch(Exception e){
-                    out.print("Error:"+e); 
-                }
-            }            
+                }  
+            }
         }catch(Exception e){
+            out.printf("error:"+e);
         }finally{
           cp.free(con);
         }

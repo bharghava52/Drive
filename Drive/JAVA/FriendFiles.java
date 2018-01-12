@@ -1,19 +1,17 @@
 package JAVA;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
@@ -23,44 +21,58 @@ public class FriendFiles extends HttpServlet {
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         ConnectionPooling cp = null;
+        Connection con = null;
+        PrintWriter out = null;
         try {
             cp = ConnectionPooling.getInstance("jdbc:mysql://localhost:3306/Drive?autoReconnect=true&useSSL=false","root","root");
-        } catch (ClassNotFoundException ex) {
-            Logger.getLogger(Login.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (SQLException ex) {
-            Logger.getLogger(Login.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        String Id=request.getSession().getAttribute("user").toString();
-        PrintWriter out= response.getWriter();
-        Connection con = null;
-        try {
+            String Id=request.getSession().getAttribute("user").toString();
+            out= response.getWriter();      
             con = cp.getConnection();
-        } catch (SQLException ex) {
-           out.println("unable to create connection");
-        }
-        ResultSet rs;
-        try {
+            ResultSet rs;
             PreparedStatement prepStmt = con.prepareStatement("select sharedby from share where mail=?");
             prepStmt.setString(1,Id);
             rs = prepStmt.executeQuery();
             out.println("<tr><td><a href='#' class='sharedwithme'><--Back</a></td></tr>");
             if(rs.next()){
+                int checker=0;
                 JSONParser parser=new JSONParser();
                 JSONObject jobj =(JSONObject) parser.parse(rs.getString("sharedby"));
-                JSONArray jary= (JSONArray) jobj.get(request.getParameter("friend"));
-                for(Object obj : jary){
-                    JSONObject jobj1=(JSONObject) obj;
+                JSONObject jobj1= (JSONObject) jobj.get(request.getParameter("friend"));
+                prepStmt = con.prepareStatement("select data from mydata where mail=? ");
+                prepStmt.setString(1,request.getParameter("friend").toString());
+                ResultSet rs1=prepStmt.executeQuery();
+                JSONObject jobj2=new JSONObject();
+                if(rs1.next()){
+                    JSONObject jfobj=(JSONObject) parser.parse(rs1.getString("data"));
                     for(Object key : jobj1.keySet()){
                         String keyStr = (String)key;
                         String keyStr1[]=keyStr.split("/");
-                        if(keyStr1[keyStr1.length-1].indexOf('.')==-1)
-                        out.println("<tr><td><a href='#' class='frienddata' path='"+keyStr+"'>"+keyStr1[keyStr1.length-1]+"</a><tr><td>");
-                        else
-                        out.println("<tr><td>"+"<a  class='file' href=\"DownloadFile?path="+keyStr+"&file="+keyStr1[keyStr1.length-1]+"\" path='"+keyStr+"' file='"+keyStr1[keyStr1.length-1]+"'>" +keyStr1[keyStr1.length-1]+"</a></td></tr>");
+                        File temp=new File(keyStr);
+                        if(temp.exists()){
+                            JSONObject jfobj1=(JSONObject) jfobj.get(key);
+                            if(jfobj1.containsKey(Id)){
+                                jobj2.put(key,jobj1.get(key));
+                                if(keyStr1[keyStr1.length-1].indexOf('.')==-1)
+                                    out.println("<tr><td><a href='#' class='frienddata' path='"+keyStr+"'>"+keyStr1[keyStr1.length-1]+"</a><tr><td>");
+                                else
+                                    out.println("<tr><td>"+"<a  class='friendfile' href=\"DownloadFile?path="+keyStr+"&file="+keyStr1[keyStr1.length-1]+"\" path='"+keyStr+"' file='"+keyStr1[keyStr1.length-1]+"'>" +keyStr1[keyStr1.length-1]+"</a></td></tr>");
+                            }
+                        }
                     }
+                }
+                if(checker==1){
+                    if(jobj2.isEmpty())
+                        jobj.remove(request.getParameter("friend"));
+                    else
+                        jobj.replace(request.getParameter("friend"), jobj2);
+                    prepStmt=con.prepareStatement("update share set sharedby=? where mail=?");
+                    prepStmt.setString(1,jobj.toString());
+                    prepStmt.setString(2,Id);
+                    prepStmt.executeUpdate();
                 }
             }
         }catch(Exception e){
+            out.print("<tr><td><a href='#'>error:"+e+"</td></tr>");
         }finally{
           cp.free(con);
         }
