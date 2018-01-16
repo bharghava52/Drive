@@ -21,14 +21,6 @@ public class Login extends HttpServlet {
     ConnectionPooling cp;
     
     protected void processRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-              response.setContentType("text/html;charset=UTF-8");
-              RequestDispatcher view = request.getRequestDispatcher("Drive.html");
-              view.forward(request, response);        
-    }
-    
-    @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
         Connection con = null;
         try {
             cp = ConnectionPooling.getInstance("jdbc:mysql://localhost:3306/Drive?autoReconnect=true&useSSL=false","root","root");
@@ -45,20 +37,34 @@ public class Login extends HttpServlet {
              if(Pass.equals(rs.getString("pass"))){
                 HttpSession session = request.getSession(true);
                 session.setAttribute("user",rs.getString("mail"));
-                processRequest(request,response);
+                response.setContentType("text/html;charset=UTF-8");
+                RequestDispatcher view = request.getRequestDispatcher("Drive.html");
+                view.forward(request, response);
              }else{
-                RequestDispatcher rd = getServletContext().getRequestDispatcher("/index.html");
-                out.println("<font color=red>Either user name or password is wrong.</font>");
+                RequestDispatcher rd =request.getRequestDispatcher("index.html");
+                out.println("<font color=red>hi "+rs.getString("fname")+" looks like your password is wrong.</font>");
                 rd.include(request, response);
              }
             }else{
-                RequestDispatcher rd = getServletContext().getRequestDispatcher("/index.html");
+                RequestDispatcher rd = request.getRequestDispatcher("index.html");
                 out.println("<font color=red>no such user exist</font>");
                 rd.include(request, response);
             }
         }catch(Exception e){
         }finally{
           cp.free(con);
-        }    
+        } 
+    }
+    
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        processRequest(request, response);
+    }
+    
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        processRequest(request, response);    
     }
 }

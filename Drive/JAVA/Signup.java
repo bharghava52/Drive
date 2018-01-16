@@ -22,7 +22,7 @@ public class Signup extends HttpServlet {
     
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-
+        response.setContentType("text/html"); 
         String fname=request.getParameter("fname");
         String lname=request.getParameter("lname");
         String mail=request.getParameter("mail");
@@ -43,27 +43,12 @@ public class Signup extends HttpServlet {
             if(Status==1){
                 File theDir = new File(mail);
                 if (!theDir.exists()) {
-                    theDir.mkdir();
-                    prepStmt = con.prepareStatement("insert into share set mail=?,sharedby=?");
-                    prepStmt.setString(1,mail);
-                    prepStmt.setString(2,"{}");
-                    Status=prepStmt.executeUpdate();
-                    if(Status==1){
-                        prepStmt = con.prepareStatement("insert into mydata set mail=?,data=?");
-                        prepStmt.setString(1,mail);
-                        prepStmt.setString(2,"{}");
-                        Status=prepStmt.executeUpdate();
-                        if(Status==1)
-                            out.println("<font color=green>Drive is ready ");
-                        else
-                            out.println("<font color=red>cannot create your database");
-                    }else
-                        out.println("<font color=red>shareing is not created");        
+                    theDir.mkdir();     
                 }
                 else{
-                    out.println("<font color=red>Drive is not ready ");
+                    out.println("<h2 color='red'>Drive is not ready </h2>");
                 }
-                out.println("Login has been created you can login now</font>");
+                out.println("<h2 color='green' class='loginBox'>Login has been created you can login now</h2>");
                 rd.include(request, response);
             }else{
               RequestDispatcher view = request.getRequestDispatcher("Unable to create Login");

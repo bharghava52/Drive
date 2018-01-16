@@ -26,25 +26,26 @@ public class SharedFiles extends HttpServlet {
             throws ServletException, IOException {
         ConnectionPooling cp = null;
         Connection con = null;
+        response.setContentType("text/html");
+        PrintWriter out= response.getWriter();
         try {
             cp = ConnectionPooling.getInstance("jdbc:mysql://localhost:3306/Drive?autoReconnect=true&useSSL=false","root","root");
             String Id=request.getSession().getAttribute("user").toString();
-            response.setContentType("text/html");
-            PrintWriter out= response.getWriter();
             con = cp.getConnection();
             ResultSet rs;
-            PreparedStatement prepStmt = con.prepareStatement("select sharedby from share where mail=?");
+            PreparedStatement prepStmt = con.prepareStatement("select * from share where mail=?");
             prepStmt.setString(1,Id);
             rs = prepStmt.executeQuery();
+            JSONObject jobj=new JSONObject();
             if(rs.next()){
-                JSONParser parser=new JSONParser();
-                JSONObject jobj =(JSONObject) parser.parse(rs.getString("sharedby"));
-                for(Object key : jobj.keySet()){
-                    String keyStr = (String)key;
-                    out.println("<tr><td><a href='#' class='friend' user='"+keyStr+"'>shared by:"+keyStr+"</a><tr><td>");
-                }
+                if(!jobj.containsKey(rs.getString("path").split("/")[0]))
+                    jobj.put(rs.getString("path").split("/")[0],"View");
+            }
+            for(Object obj : jobj.keySet()){
+             out.print("<tr><td><a href='#' class='friend' user='"+obj.toString()+"'>SharedBy:"+obj.toString()+"</td></tr>");
             }
         }catch(Exception e){
+            out.print("<script>alert(\"error:"+e+"\");</script>");
         }finally{
           cp.free(con);
         }    

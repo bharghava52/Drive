@@ -29,47 +29,18 @@ public class FriendFiles extends HttpServlet {
             out= response.getWriter();      
             con = cp.getConnection();
             ResultSet rs;
-            PreparedStatement prepStmt = con.prepareStatement("select sharedby from share where mail=?");
+            PreparedStatement prepStmt = con.prepareStatement("select * from share where mail=? and path like ?");
             prepStmt.setString(1,Id);
+            prepStmt.setString(2,request.getParameter("friend").toString()+"%");
             rs = prepStmt.executeQuery();
             out.println("<tr><td><a href='#' class='sharedwithme'><--Back</a></td></tr>");
-            if(rs.next()){
-                int checker=0;
-                JSONParser parser=new JSONParser();
-                JSONObject jobj =(JSONObject) parser.parse(rs.getString("sharedby"));
-                JSONObject jobj1= (JSONObject) jobj.get(request.getParameter("friend"));
-                prepStmt = con.prepareStatement("select data from mydata where mail=? ");
-                prepStmt.setString(1,request.getParameter("friend").toString());
-                ResultSet rs1=prepStmt.executeQuery();
-                JSONObject jobj2=new JSONObject();
-                if(rs1.next()){
-                    JSONObject jfobj=(JSONObject) parser.parse(rs1.getString("data"));
-                    for(Object key : jobj1.keySet()){
-                        String keyStr = (String)key;
-                        String keyStr1[]=keyStr.split("/");
-                        File temp=new File(keyStr);
-                        if(temp.exists()){
-                            JSONObject jfobj1=(JSONObject) jfobj.get(key);
-                            if(jfobj1.containsKey(Id)){
-                                jobj2.put(key,jobj1.get(key));
-                                if(keyStr1[keyStr1.length-1].indexOf('.')==-1)
-                                    out.println("<tr><td><a href='#' class='frienddata' path='"+keyStr+"'>"+keyStr1[keyStr1.length-1]+"</a><tr><td>");
-                                else
-                                    out.println("<tr><td>"+"<a  class='friendfile' href=\"DownloadFile?path="+keyStr+"&file="+keyStr1[keyStr1.length-1]+"\" path='"+keyStr+"' file='"+keyStr1[keyStr1.length-1]+"'>" +keyStr1[keyStr1.length-1]+"</a></td></tr>");
-                            }
-                        }
-                    }
-                }
-                if(checker==1){
-                    if(jobj2.isEmpty())
-                        jobj.remove(request.getParameter("friend"));
-                    else
-                        jobj.replace(request.getParameter("friend"), jobj2);
-                    prepStmt=con.prepareStatement("update share set sharedby=? where mail=?");
-                    prepStmt.setString(1,jobj.toString());
-                    prepStmt.setString(2,Id);
-                    prepStmt.executeUpdate();
-                }
+            while(rs.next()){
+                String path=rs.getString("path");
+                String path1=path.split("/")[path.split("/").length-1];
+                if(path1.indexOf('.')==-1)
+                    out.println("<tr><td><a href='#' class='frienddata folder"+rs.getString("mode")+"' path='"+path+"'>"+path1+"</a><tr><td>");
+                else
+                    out.println("<tr><td>"+"<a  class='friendfile file"+rs.getString("mode")+"' href=\"DownloadFile?path="+path+"&file="+path1+"\" path='"+path+"' file='"+path1+"'>" +path1+"</a></td></tr>");
             }
         }catch(Exception e){
             out.print("<tr><td><a href='#'>error:"+e+"</td></tr>");

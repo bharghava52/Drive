@@ -8,6 +8,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import com.oreilly.servlet.MultipartRequest;
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -37,37 +38,44 @@ public class Upload extends HttpServlet {
             ConnectionPooling cp=null;
             Connection con=null;
             try{
-            String name = (String)files.nextElement(); 
-            String filename = m.getFilesystemName(name); 
-            Path temp = Files.move(Paths.get("temp\\"+filename),Paths.get(m.getParameter("path")+"\\"+filename));
-            if(temp!=null){
-                cp = ConnectionPooling.getInstance("jdbc:mysql://localhost:3306/Drive?autoReconnect=true&useSSL=false", "root","root");
-                con=cp.getConnection();
-                PreparedStatement prepStmt = con.prepareStatement("select data from mydata where mail=?");
-                prepStmt.setString(1,m.getParameter("path").split("/")[0]);
-                ResultSet rs=prepStmt.executeQuery();
-                if(rs.next()){
+                String name = (String)files.nextElement(); 
+                String filename = m.getFilesystemName(name); 
+                Path temp = Files.move(Paths.get("temp\\"+filename),Paths.get(m.getParameter("path")+"\\"+filename));
+                if(temp!=null){
+                    cp = ConnectionPooling.getInstance("jdbc:mysql://localhost:3306/Drive?autoReconnect=true&useSSL=false", "root","root");
+                    con=cp.getConnection();
+                    PreparedStatement prepStmt = con.prepareStatement("Select users from mydata where path=?");
+                    prepStmt.setString(1,m.getParameter("path"));
+                    ResultSet rs=prepStmt.executeQuery();
                     JSONParser parser=new JSONParser();
-                    JSONObject jobj=(JSONObject) parser.parse(rs.getString("data"));
-                    JSONObject jobj1=(JSONObject) parser.parse("{}");
-                    if(jobj.get(m.getParameter("path"))==null)
-                        jobj.put(m.getParameter("path")+"/"+filename,jobj1);
-                    else
-                        jobj.put(m.getParameter("path")+"/"+filename,jobj.get(m.getParameter("path")));
-                    prepStmt = con.prepareStatement("update mydata set data=? where mail=?");
-                    prepStmt.setString(1,jobj.toString());
-                    prepStmt.setString(2,m.getParameter("path").split("/")[0]);
-                    int status=prepStmt.executeUpdate();
-                    if(status==1){
-                        out.print("<script type=\"text/javascript\">alert(\"successfully uploaded\");</script>");
-                    }else
-                        out.print("<script type=\"text/javascript\">alert(\"unable to update to database\");</script>");
-                }
-                
-            }else{
-                out.print("<script type=\"text/javascript\">alert(\"unable to upload\");</script>");
-            } 
+                    JSONObject jobj;
+                    if(rs.next()){
+                     jobj=(JSONObject) parser.parse(rs.getString("users"));
+                    }else{
+                     jobj=(JSONObject) parser.parse("{}");
+                    }
+                    prepStmt = con.prepareStatement("insert into mydata set mail=?,path=?,users=?");
+                    prepStmt.setString(1,m.getParameter("path").split("/")[0]);
+                    prepStmt.setString(2,m.getParameter("path")+"/"+filename);
+                    prepStmt.setString(3,jobj.toString());
+                    int Status=prepStmt.executeUpdate();
+                    if(Status==1){
+                        out.println("<script type=\"text/javascript\">alert(\"file uploaded\");</script>");
+                    }else{
+                     out.print("<script type=\"text/javascript\">alert(\"unable to upload\");</script>");
+                    }
+
+                }else{
+                    out.print("<script type=\"text/javascript\">alert(\"unable to upload\");</script>");
+                } 
             }catch(Exception e){
+               files = m.getFileNames();
+               while (files.hasMoreElements()) 
+               {
+                String name = (String)files.nextElement(); 
+                File f=new File(m.getParameter("path")+"/"+m.getFilesystemName(name));
+                f.delete();
+               } 
                out.print("<script type=\"text/javascript\">alert(\"error:"+e+"\");</script>"); 
             }finally{
              cp.free(con);

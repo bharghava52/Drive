@@ -7,7 +7,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.servlet.ServletException;
@@ -15,7 +14,6 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -35,25 +33,26 @@ public class CreateFolder extends HttpServlet {
                 try {
                     cp = ConnectionPooling.getInstance("jdbc:mysql://localhost:3306/Drive?autoReconnect=true&useSSL=false", "root","root");
                     con=cp.getConnection();
-                    PreparedStatement prepStmt = con.prepareStatement("select data from mydata where mail=?");
-                    prepStmt.setString(1,request.getParameter("path").split("/")[0]);
-                    System.out.println("creating directory: " + theDir.getName());
+                    PreparedStatement prepStmt = con.prepareStatement("Select users from mydata where path=?");
+                    prepStmt.setString(1,request.getParameter("path"));
                     ResultSet rs=prepStmt.executeQuery();
+                    JSONParser parser=new JSONParser();
+                    JSONObject jobj;
                     if(rs.next()){
-                        JSONParser parser=new JSONParser();
-                        JSONObject jobj=(JSONObject) parser.parse(rs.getString("data"));
-                        JSONObject jobj1=(JSONObject) parser.parse("{}");
-                        jobj.put(s,jobj1);
-                        prepStmt=con.prepareStatement("update mydata set data=? where mail=?");
-                        prepStmt.setString(1,jobj.toString());
-                        prepStmt.setString(2,request.getParameter("path").split("/")[0]);
-                        int Status=prepStmt.executeUpdate();
-                        if(Status==1){
-                            theDir.mkdir();
-                            out.println("folder created");
-                        }else{
-                         out.print("unable to create folder");
-                        }
+                     jobj=(JSONObject) parser.parse(rs.getString("users"));
+                    }else{
+                     jobj=(JSONObject) parser.parse("{}");
+                    }
+                    prepStmt = con.prepareStatement("insert into mydata set mail=?,path=?,users=?");
+                    prepStmt.setString(1,request.getParameter("path").split("/")[0]);
+                    prepStmt.setString(2,s);
+                    prepStmt.setString(3,jobj.toString());
+                    int Status=prepStmt.executeUpdate();
+                    if(Status==1){
+                        theDir.mkdir();
+                        out.println("folder created");
+                    }else{
+                     out.print("unable to create folder");
                     }
                 }catch(Exception e){
                     out.println("error:"+e);

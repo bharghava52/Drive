@@ -41,23 +41,21 @@ public class DownloadFile extends HttpServlet {
                     out.write(i);   
                 }   
                 fileInputStream.close(); 
-            }else
-            {
+            }
+            else{
                 int checkfriend=0;
                 ConnectionPooling cp = null;
                 Connection con = null; 
                 try {
                     cp = ConnectionPooling.getInstance("jdbc:mysql://localhost:3306/Drive?autoReconnect=true&useSSL=false","root","root");              
                     con = cp.getConnection();
-                    PreparedStatement prepStmt = con.prepareStatement("select data from mydata where mail=?");
-                    prepStmt.setString(1,request.getParameter("path").split("/")[0]);
+                    PreparedStatement prepStmt = con.prepareStatement("select users from mydata where path=?");
+                    prepStmt.setString(1,request.getParameter("path"));
                     ResultSet rs = prepStmt.executeQuery();
                     if(rs.next()){
                         JSONParser parser=new JSONParser();
-                        JSONObject jobj = null;
-                        jobj =(JSONObject) parser.parse(rs.getString("data"));
-                        JSONObject jobj1 =(JSONObject) jobj.get(request.getParameter("path"));
-                        if(jobj1.containsKey(request.getSession().getAttribute("user"))){
+                        JSONObject jobj = (JSONObject) parser.parse(rs.getString("users"));
+                        if(jobj.containsKey(request.getSession().getAttribute("user"))){
                             response.setContentType("APPLICATION/OCTET-STREAM");   
                             response.setHeader("Content-Disposition","attachment; filename=\""+request.getParameter("file")+"\"");   
                             FileInputStream fileInputStream = new FileInputStream(path);  
@@ -68,22 +66,31 @@ public class DownloadFile extends HttpServlet {
                             fileInputStream.close();
                             checkfriend=1;
                         }
+                    }else{
+                        if(path.contains(".zip")){
+                            response.setContentType("APPLICATION/OCTET-STREAM");   
+                            response.setHeader("Content-Disposition","attachment; filename=\""+request.getParameter("file")+"\"");   
+                            FileInputStream fileInputStream = new FileInputStream(path);  
+                            int i;   
+                            while ((i=fileInputStream.read()) != -1){  
+                                out.write(i);   
+                            }   
+                            fileInputStream.close(); 
+                        }
                     }    
                     if(checkfriend==0){
-                        out.println("<font color=red>Please login to Download</font>");
-                        rd.include(request, response);
+                        out.println("<script>alert(\"you don't have access to download this file\");</script>");
                     }
                 }catch(Exception e){
-                    out.println("<font color=red>Please login to Download</font>");
-                    rd.include(request, response);
+                    out.println("<script>alert(\"error:"+e+"\");</script>");
                 }finally{
                     cp.free(con);
+                    rd.include(request, response);
                 }
             }    
         out.close();
         }catch(Exception e){
-            out.println("<font color=red>Please login to Download</font>");
-            rd.include(request, response);
+            out.println("<script>alert(\"error:"+e+"\");</script>");
         }
     }
 
