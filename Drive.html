@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Drive</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="CSS/login.css">
+        <link rel="stylesheet" href="CSS/bootstrap.css">
+        <script src="JS/jquery.js" type="text/javascript"></script>
+        <script src="JS/bootstrap.js"></script>
+	<script src="JS/ajax.js" type="text/javascript"></script>
+        <script src="JS/autocomplete-0.3.0.min.js" type="text/javascript"></script>
+        <script src="JS/Drive.js" type="text/javascript"></script>
+    </head>
+    <body id="body">
+        <nav class="navbar navbar-inverse">
+            <div class="container-fluid">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#mynavbar">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <a class="navbar-brand" href="#" id='mydrive'>Drive</a>
+                </div>
+                <div class="collapse navbar-collapse" id="mynavbar">
+                    <ul class="nav navbar-nav pull-right">
+                        <li>
+                            <a class="navbar-brand" href="#" id='id'></a>
+                        </li> 
+                        <li>
+                            <button class="sharedwithme" style="background-color: transparent; border: 0;"><a class="navbar-brand">Shared with me</a></button>
+                        </li>
+                        <li>
+                            <a href="Logout.html">Logout</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+        <iframe name="formDestination" id="formDestination" style="display:none"><head></head><body></body></iframe>
+        <div>
+            <table id="files"></table>
+        </div>
+        <div class="roundbutton">
+        <button id="uploadBtn" class="btn-default btn-sm" onclick="uploadFunction()">upload File</button>
+        <button id="folderBtn" class="btn-defalut btn-sm" onclick="showfolderBox()">Create Folder</button>
+        <input id="myBtn" type="button" value="+" onclick="toggle()"/>
+        </div>
+        
+        <div id="snackbar">
+                <form action="Upload" method="post" enctype="multipart/form-data" target="formDestination">  
+                    Select File:<input type="file" name="fname"/><br/>
+                    <input type="hidden" name="path" id="uploadpath"/>
+                    <input type="submit" value="upload"/>  
+                </form>
+                <button id="snackbarclose" onclick="closesnackbar()">Close</button>
+        </div>
+        
+        <div id="folderBox" style="display:none">
+            <input id="fldrname" type="text" style="color: black"/><br/>
+            <button id="createfolder" class="btn-defalut btn-sm" style="color: black">Create</button>
+            <button id="closefolderBox" class="btn-defalut btn-sm" onclick="closefolderBox()" style="color: black">Close</button>
+        </div>
+        
+        <div id="shareBox" style="display:none">
+            <input type="hidden" id="sharepath" value=""/>
+            <input id="sharemail" type="text" style="color: black" onkeyup="search()"/>
+            <select id="sharetype" name="Type">
+                <option value="VIEW">Can View</option>
+                <option value="EDIT">Can Edit</option>
+                <option value="SHARE">Can Share</option>
+            </select>
+            <ul id="users"></ul>
+            <button id="sharetomail" class="btn-defalut btn-sm" style="color: black">Share</button>
+            <button id="closeshareBox" class="btn-defalut btn-sm" onclick="closeshareBox()" style="color: black">Close</button>
+        </div>
+        
+        <div id='foldermenu'>
+            <input id="foldermenupath" type="hidden" value="" file=""/>
+          <ul id='folderitems'>
+            <li class="download">Download Folder</li>
+            <li class="delete">Delete Folder</li>  
+            <li class="share">Share Folder</li>
+          </ul>
+        </div>
+        
+        <div id='filemenu'>
+            <input id="filemenupath" type="hidden" value="" file=""/>
+          <ul id='fileitems'>
+            <li class="delete">Delete File</li>  
+            <li class="share">Share File</li>
+          </ul>
+        </div>
+        
+        <div id='folderEDIT'>
+            <input id="folderEDITpath" type="hidden" value="" file=""/>
+          <ul id='folderEDITitems'>
+            <li class="download">Download Folder</li>
+            <li class="delete">Delete Folder</li>  
+          </ul>
+        </div>
+        
+        <div id='fileEDIT'>
+            <input id="fileEDITpath" type="hidden" value="" file=""/>
+          <ul id='fileEDITitems'>
+            <li class="delete">Delete File</li>  
+          </ul>
+        </div>
+        
+    </body>
+</html>

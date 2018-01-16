@@ -1,0 +1,39 @@
+<html>
+    <head>
+        <title>Drive</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="CSS/bootstrap.css">
+        <link rel="stylesheet" href="CSS/login.css">
+        <script src="JS/jquery.js" type="text/javascript"></script>
+        <script src="JS/bootstrap.js"></script>
+	<script src="JS/ajax.js" type="text/javascript"></script>
+        <script type="text/javascript">
+        $(document).ready(function (){
+            $.post("Logout",{},
+            function(data,status){
+                    $("#id").append(data);
+            });
+            $.post("Logout",{},
+            function(data,status){
+                    $("#files").append(data);
+            });
+        });
+        </script>
+    </head>
+    <body>
+        <div class="loginBox">
+            <h2>Thank you for using our service</h2>
+            <h2>Drive Login</h2>
+            <form method="post" action="Login">
+                <p id="sc"></p>
+                <p>Mail ID</p>
+                <input type="text" name="name" >
+                <p>Password</p>
+                <input type="password" name="pass">
+                <input type="Submit"  value="Sign In">
+                <p> <a href="signup.html" ><u>No account? Sign Up</u></a></p>
+            </form>
+        </div>
+    </body>
+</html>
