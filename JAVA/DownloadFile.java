@@ -1,11 +1,8 @@
 package JAVA;
 
-
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.logging.Level;
@@ -30,7 +27,7 @@ public class DownloadFile extends HttpServlet {
         RequestDispatcher rd = getServletContext().getRequestDispatcher("/index.html");
         PrintWriter out = response.getWriter();
         HttpSession ck=request.getSession();
-        String path=request.getParameter("path");  
+        String path=request.getParameter("path");
         try{
             if(path.toLowerCase().contains(ck.getAttribute("user").toString().toLowerCase())){
                 response.setContentType("APPLICATION/OCTET-STREAM");   
@@ -44,14 +41,9 @@ public class DownloadFile extends HttpServlet {
             }
             else{
                 int checkfriend=0;
-                ConnectionPooling cp = null;
-                Connection con = null; 
+                DBOperations dbo=new DBOperations();
                 try {
-                    cp = ConnectionPooling.getInstance("jdbc:mysql://localhost:3306/Drive?autoReconnect=true&useSSL=false","root","root");              
-                    con = cp.getConnection();
-                    PreparedStatement prepStmt = con.prepareStatement("select users from mydata where path=?");
-                    prepStmt.setString(1,request.getParameter("path"));
-                    ResultSet rs = prepStmt.executeQuery();
+                    ResultSet rs = dbo.Select("users from mydata where path='"+request.getParameter("path")+"'");
                     if(rs.next()){
                         JSONParser parser=new JSONParser();
                         JSONObject jobj = (JSONObject) parser.parse(rs.getString("users"));
@@ -84,7 +76,6 @@ public class DownloadFile extends HttpServlet {
                 }catch(Exception e){
                     out.println("<script>alert(\"error:"+e+"\");</script>");
                 }finally{
-                    cp.free(con);
                     rd.include(request, response);
                 }
             }    
@@ -94,15 +85,6 @@ public class DownloadFile extends HttpServlet {
         }
     }
 
-    // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
-    /**
-     * Handles the HTTP <code>GET</code> method.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -115,14 +97,6 @@ public class DownloadFile extends HttpServlet {
         }
     }
 
-    /**
-     * Handles the HTTP <code>POST</code> method.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -134,15 +108,4 @@ public class DownloadFile extends HttpServlet {
             Logger.getLogger(DownloadFile.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-
-    /**
-     * Returns a short description of the servlet.
-     *
-     * @return a String containing servlet description
-     */
-    @Override
-    public String getServletInfo() {
-        return "Short description";
-    }// </editor-fold>
-
 }

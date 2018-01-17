@@ -3,7 +3,6 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Vector;
-import java.lang.String;
 
 public class ConnectionPooling {
     private static String  url, username, password;

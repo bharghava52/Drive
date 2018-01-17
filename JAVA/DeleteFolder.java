@@ -3,8 +3,6 @@ package JAVA;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -34,17 +32,12 @@ public class DeleteFolder extends HttpServlet {
         response.setContentType("text/html"); 
         PrintWriter out = response.getWriter();
         String path=request.getParameter("path");
+        DBOperations dbo=new DBOperations();
         if(path.toLowerCase().contains(ck.getAttribute("user").toString().toLowerCase()) || path.contains(".zip")){
             File file = new File(path);
             deleteDir(file);
-            ConnectionPooling cp=null;
-            Connection con=null;
             try {
-                cp = ConnectionPooling.getInstance("jdbc:mysql://localhost:3306/Drive?autoReconnect=true&useSSL=false", "root","root");
-                con=cp.getConnection();
-                PreparedStatement prepStmt = con.prepareStatement("delete from mydata where path like ?");
-                prepStmt.setString(1,path+"%");
-                int Status=prepStmt.executeUpdate();
+                int Status=dbo.Update("mydata where path like '"+path+"%'");
                 if(Status==1 || Status==2){
                     out.print("deleted files/folder");
                 }else{
@@ -55,26 +48,17 @@ public class DeleteFolder extends HttpServlet {
             }catch(Exception e){
              out.print("error :"+e);
             }finally{
-                cp.free(con);
             }
             out.close();
         }else{
-            ConnectionPooling cp=null;
-            Connection con=null;
             try {
-                cp = ConnectionPooling.getInstance("jdbc:mysql://localhost:3306/Drive?autoReconnect=true&useSSL=false", "root","root");
-                con=cp.getConnection();
-                PreparedStatement prepStmt = con.prepareStatement("select users from mydata where path=?");
-                prepStmt.setString(1,path);
-                ResultSet rs=prepStmt.executeQuery();
+                ResultSet rs=dbo.Select("users from mydata where path='"+path+"'");
                 if(rs.next()){
                  JSONParser parser=new JSONParser();
                  JSONObject obj=(JSONObject) parser.parse(rs.getString("users"));
                  if(obj.containsKey(ck.getAttribute("user"))){
                   if(obj.get(ck.getAttribute("user")).equals("SHARE")||obj.get(ck.getAttribute("user")).equals("EDIT")){
-                    prepStmt = con.prepareStatement("delete from mydata where path like ?");
-                    prepStmt.setString(1,path+"%");
-                    int Status=prepStmt.executeUpdate();
+                    int Status=dbo.Delete("mydata where path like '"+path+"%'");
                     if(Status==1 || Status==2){
                         out.print("deleted files/folder");
                     }else{
@@ -87,50 +71,20 @@ public class DeleteFolder extends HttpServlet {
                 }
             }catch(Exception e){
              out.print("error :"+e);
-            }finally{
-                cp.free(con);
             }
             out.close();
         }
     }
 
-    // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
-    /**
-     * Handles the HTTP <code>GET</code> method.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         processRequest(request, response);
     }
 
-    /**
-     * Handles the HTTP <code>POST</code> method.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         processRequest(request, response);
     }
-
-    /**
-     * Returns a short description of the servlet.
-     *
-     * @return a String containing servlet description
-     */
-    @Override
-    public String getServletInfo() {
-        return "Short description";
-    }// </editor-fold>
-
 }

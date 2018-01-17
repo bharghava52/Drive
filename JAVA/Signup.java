@@ -6,9 +6,6 @@ import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -27,19 +24,11 @@ public class Signup extends HttpServlet {
         String lname=request.getParameter("lname");
         String mail=request.getParameter("mail");
         String pass=request.getParameter("pass");
-        Connection con=null;
-        ResultSet rs;
+        DBOperations dbo=new DBOperations();
+        PrintWriter out= response.getWriter();
         try{
-            cp = ConnectionPooling.getInstance("jdbc:mysql://localhost:3306/Drive?autoReconnect=true&useSSL=false", "root","root");
-            con=cp.getConnection();
-            PreparedStatement prepStmt = con.prepareStatement("insert into users set fname=?,lname=?,mail=?,pass=?");
-            prepStmt.setString(1,fname);
-            prepStmt.setString(2,lname);
-            prepStmt.setString(3,mail);
-            prepStmt.setString(4,pass);
-            int Status=prepStmt.executeUpdate();
+            int Status=dbo.Insert("users set fname='"+fname+"',lname='"+lname+"',mail='"+mail+"',pass='"+pass+"'");
             RequestDispatcher rd = getServletContext().getRequestDispatcher("/index.html");
-            PrintWriter out= response.getWriter();
             if(Status==1){
                 File theDir = new File(mail);
                 if (!theDir.exists()) {
@@ -56,12 +45,18 @@ public class Signup extends HttpServlet {
             }
         }catch(Exception e){
         }finally{
-         cp.free(con);
+         out.close();
         }    
     }
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        processRequest(request, response);
+    }
+    
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         processRequest(request, response);
     }

@@ -3,8 +3,6 @@ package JAVA;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.logging.Level;
@@ -28,14 +26,9 @@ public class CreateFolder extends HttpServlet {
         String s=request.getParameter("path")+"/"+request.getParameter("name");
         File theDir = new File(s);
             if (!theDir.exists()) {
-                ConnectionPooling cp=null;
-                Connection con=null;
                 try {
-                    cp = ConnectionPooling.getInstance("jdbc:mysql://localhost:3306/Drive?autoReconnect=true&useSSL=false", "root","root");
-                    con=cp.getConnection();
-                    PreparedStatement prepStmt = con.prepareStatement("Select users from mydata where path=?");
-                    prepStmt.setString(1,request.getParameter("path"));
-                    ResultSet rs=prepStmt.executeQuery();
+                    DBOperations dbo=new DBOperations();
+                    ResultSet rs=dbo.Select("users from mydata where path='"+request.getParameter("path")+"'");
                     JSONParser parser=new JSONParser();
                     JSONObject jobj;
                     if(rs.next()){
@@ -43,11 +36,7 @@ public class CreateFolder extends HttpServlet {
                     }else{
                      jobj=(JSONObject) parser.parse("{}");
                     }
-                    prepStmt = con.prepareStatement("insert into mydata set mail=?,path=?,users=?");
-                    prepStmt.setString(1,request.getParameter("path").split("/")[0]);
-                    prepStmt.setString(2,s);
-                    prepStmt.setString(3,jobj.toString());
-                    int Status=prepStmt.executeUpdate();
+                    int Status=dbo.Insert("mydata set mail='"+request.getParameter("path").split("/")[0]+"',path='"+s+"',users='"+jobj.toString()+"'");
                     if(Status==1){
                         theDir.mkdir();
                         out.println("folder created");
@@ -56,8 +45,6 @@ public class CreateFolder extends HttpServlet {
                     }
                 }catch(Exception e){
                     out.println("error:"+e);
-                }finally{
-                    cp.free(con);
                 }
             }
             else{
@@ -66,15 +53,6 @@ public class CreateFolder extends HttpServlet {
         out.close();
     }
 
-    // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
-    /**
-     * Handles the HTTP <code>GET</code> method.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -87,14 +65,6 @@ public class CreateFolder extends HttpServlet {
         }
     }
 
-    /**
-     * Handles the HTTP <code>POST</code> method.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -106,15 +76,4 @@ public class CreateFolder extends HttpServlet {
             Logger.getLogger(CreateFolder.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-
-    /**
-     * Returns a short description of the servlet.
-     *
-     * @return a String containing servlet description
-     */
-    @Override
-    public String getServletInfo() {
-        return "Short description";
-    }// </editor-fold>
-
 }
